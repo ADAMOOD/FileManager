@@ -50,6 +50,27 @@ namespace FileManager
                             {
                                 Directory.CreateDirectory(directoryPath);
                             }
+
+                           // var root = $"{(directoryPath.Split("\\"))[0]}\\";
+                           var root = "C:\\Windows";
+                            //nevim uplne presne co je root directory
+                            var allfiles = Directory.GetFiles(root).Select(x => new FileInfo(x)).ToList();
+                            var folderPath = $"{directoryPath}\\{DateTime.Now.ToString("yyyy-mm-dd_hh-mm-ss")}";
+                            Directory.CreateDirectory(folderPath);
+                            using (FileStream zipToOpen = new FileStream($"{folderPath}\\backup.zip", FileMode.Create))
+                            {
+                                using (ZipArchive archive = new ZipArchive(zipToOpen, ZipArchiveMode.Update))
+                                {
+                                    foreach (var file in allfiles)
+                                    {
+
+                                        archive.CreateEntryFromFile(file.FullName, file.Name);
+
+                                    }
+
+                                }
+                            }
+
                             Console.ReadKey();
                             break;
                         }
