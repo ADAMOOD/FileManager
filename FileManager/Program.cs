@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Linq.Expressions;
+using System.Reflection.Metadata;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using BetterConsoleTables;
@@ -55,7 +58,9 @@ namespace FileManager
                             var allfiles = Directory.GetFiles(root).Select(x => new FileInfo(x)).ToList();
                             var folderPath = $"{directoryPath}\\{DateTime.Now.ToString("yyyy-mm-dd_hh-mm-ss")}";
                             Directory.CreateDirectory(folderPath);
-                            using (FileStream zipToOpen = new FileStream($"{folderPath}\\backup.zip", FileMode.Create))
+                            var zipPath = $"{folderPath}\\backup.zip";
+                            var time = Stopwatch.StartNew();
+                            using (FileStream zipToOpen = new FileStream(zipPath, FileMode.Create))
                             {
                                 using (ZipArchive archive = new ZipArchive(zipToOpen, ZipArchiveMode.Update))
                                 {
@@ -66,13 +71,42 @@ namespace FileManager
                                     }
                                 }
                             }
+                            time.Stop();
+                            var timeInMs = time.ElapsedMilliseconds;
+                            Console.WriteLine($"This operation lasted {timeInMs} ms");
                             Console.WriteLine("Press any key to exit");
                             Console.ReadKey();
                             break;
                         }
                     case 'c':
                         {
-                            GetExistingDirectoryPath("C:\\tmp");
+                            var directoroyPath = GetExistingDirectoryPath("C:\\tmp");
+                            var allFolders = Directory.GetDirectories(directoroyPath).ToList();
+                            List<List<FileInfo>> allZips = new List<List<FileInfo>>();
+                            int i = 1;
+                            foreach (var folder in allFolders)
+                            {
+                                var zipFile = Directory.GetFiles(folder).Select(x => new FileInfo(x)).Where(file => file.Name.Equals("backup.zip")).ToList();
+                                foreach (var file in zipFile)
+                                {
+                                    Console.WriteLine($"{i}-> {file.DirectoryName}");
+                                    i++;
+                                }
+                                allZips.Add(zipFile);
+                            }
+
+                            var folderNumber = 0;
+                            Int32.TryParse(ReadValue("Select folder by number", "1"),out folderNumber);
+                            if ((folderNumber>i)||(folderNumber<1))
+                            {
+                                Console.ForegroundColor = ConsoleColor.Red;
+                                Console.WriteLine("\nInvalid option selected");
+                                Console.ResetColor();
+                                Thread.Sleep(750);
+                                break;
+                            }
+                            Console.WriteLine("Press any key to exit");
+                            Console.ReadKey();
                             break;
                         }
                 }
