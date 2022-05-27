@@ -17,11 +17,11 @@ namespace FileManager
         public const char Separator = ';';
         static void Main(string[] args)
         {
+            Console.WriteLine("FILEMANAGER3000!!!!!!!!!!");
+            Console.WriteLine("Choose Option");
+            Console.WriteLine("A->File extension statistics\nB->Create backup file\nC->List backup files");
             while (true)
             {
-                Console.WriteLine("FILEMANAGER3000!!!!!!!!!!");
-                Console.WriteLine("Choose Option");
-                Console.WriteLine("A->File extension statistics\nB->Create backup file\nC->List backup files");
                 Helpers.ClearCurrentConsoleLine(5);
                 char choice = Console.ReadKey().KeyChar;
                 if (!CheckIfChoiceInputIsValid(choice))
@@ -36,7 +36,7 @@ namespace FileManager
                 {
                     case 'a':
                         {
-                            var directoryPath = GetDirectoryPath(@"c:\Windows\System32");
+                            var directoryPath = GetExistingDirectoryPath(@"c:\Windows\System32");
                             var fileExt = ReadValue("File extension", string.Empty).Trim();
                             FileExtensionStatistics(directoryPath, fileExt);
                             Console.WriteLine("Press any key to exit");
@@ -50,9 +50,7 @@ namespace FileManager
                             {
                                 Directory.CreateDirectory(directoryPath);
                             }
-
-                           // var root = $"{(directoryPath.Split("\\"))[0]}\\";
-                           var root = "C:\\Windows";
+                            var root = directoryPath;
                             //nevim uplne presne co je root directory
                             var allfiles = Directory.GetFiles(root).Select(x => new FileInfo(x)).ToList();
                             var folderPath = $"{directoryPath}\\{DateTime.Now.ToString("yyyy-mm-dd_hh-mm-ss")}";
@@ -63,19 +61,18 @@ namespace FileManager
                                 {
                                     foreach (var file in allfiles)
                                     {
-
+                                        Console.WriteLine($"mooving {file.Name} to zip");
                                         archive.CreateEntryFromFile(file.FullName, file.Name);
-
                                     }
-
                                 }
                             }
-
+                            Console.WriteLine("Press any key to exit");
                             Console.ReadKey();
                             break;
                         }
                     case 'c':
                         {
+                            GetExistingDirectoryPath("C:\\tmp");
                             break;
                         }
                 }
@@ -122,7 +119,7 @@ namespace FileManager
 
         }
 
-        private static string GetDirectoryPath(string DefaultPath)
+        private static string GetExistingDirectoryPath(string DefaultPath)
         {
             Console.WriteLine();
             var directoryPath = "";
