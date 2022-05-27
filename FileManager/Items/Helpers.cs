@@ -6,7 +6,7 @@ namespace FileManager.Items
 {
     internal class Helpers
     {
-		public static void ClearCurrentConsoleLine(int top)
+		public static void ClearCurrentConsoleArea(int top)
         {
             Console.SetCursorPosition(0, top);
             for (int i = 0; i < 50; i++)

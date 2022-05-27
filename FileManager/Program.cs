@@ -25,20 +25,18 @@ namespace FileManager
             Console.WriteLine("A->File extension statistics\nB->Create backup file\nC->List backup files");
             while (true)
             {
-                Helpers.ClearCurrentConsoleLine(5);
+                Helpers.ClearCurrentConsoleArea(5);
                 char choice = Console.ReadKey().KeyChar;
                 if (!CheckIfChoiceInputIsValid(choice))
                 {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine("\nInvalid menu option selected");
-                    Console.ResetColor();
-                    Thread.Sleep(750);
+                    Error("\nInvalid menu option selected");
                     continue;
                 }
                 switch (choice)
                 {
                     case 'a':
                         {
+                            Console.WriteLine();
                             var directoryPath = GetExistingDirectoryPath(@"c:\Windows\System32");
                             var fileExt = ReadValue("File extension", string.Empty).Trim();
                             FileExtensionStatistics(directoryPath, fileExt);
@@ -48,6 +46,7 @@ namespace FileManager
                         }
                     case 'b':
                         {
+                            Console.WriteLine();
                             var directoryPath = ReadValue("Directory", @"C:\tmp");
                             if (!CheckIfDirExists(directoryPath))
                             {
@@ -60,16 +59,15 @@ namespace FileManager
                             Directory.CreateDirectory(folderPath);
                             var zipPath = $"{folderPath}\\backup.zip";
                             var time = Stopwatch.StartNew();
-                            using (FileStream zipToOpen = new FileStream(zipPath, FileMode.Create))
+
+                            using var archive = ZipFile.Open(zipPath, ZipArchiveMode.Create);
                             {
-                                using (ZipArchive archive = new ZipArchive(zipToOpen, ZipArchiveMode.Update))
+                                foreach (var file in allfiles)
                                 {
-                                    foreach (var file in allfiles)
-                                    {
-                                        Console.WriteLine($"mooving {file.Name} to zip");
-                                        archive.CreateEntryFromFile(file.FullName, file.Name);
-                                    }
+                                    Console.WriteLine($"mooving {file.Name} to zip");
+                                    archive.CreateEntryFromFile(file.FullName, file.Name);
                                 }
+
                             }
                             time.Stop();
                             var timeInMs = time.ElapsedMilliseconds;
@@ -80,31 +78,25 @@ namespace FileManager
                         }
                     case 'c':
                         {
+                            Console.WriteLine();
                             var directoroyPath = GetExistingDirectoryPath("C:\\tmp");
-                            var allFolders = Directory.GetDirectories(directoroyPath).ToList();
-                            List<List<FileInfo>> allZips = new List<List<FileInfo>>();
-                            int i = 1;
-                            foreach (var folder in allFolders)
-                            {
-                                var zipFile = Directory.GetFiles(folder).Select(x => new FileInfo(x)).Where(file => file.Name.Equals("backup.zip")).ToList();
-                                foreach (var file in zipFile)
-                                {
-                                    Console.WriteLine($"{i}-> {file.DirectoryName}");
-                                    i++;
-                                }
-                                allZips.Add(zipFile);
-                            }
 
-                            var folderNumber = 0;
-                            Int32.TryParse(ReadValue("Select folder by number", "1"),out folderNumber);
-                            if ((folderNumber>i)||(folderNumber<1))
+                            List<FileInfo> allZips = new List<FileInfo>();
+                            int i = 1;
+                            var allZipFolders = Directory.EnumerateFiles(directoroyPath, "backup.zip", SearchOption.AllDirectories).ToList();
+                            foreach (var folder in allZipFolders)
                             {
-                                Console.ForegroundColor = ConsoleColor.Red;
-                                Console.WriteLine("\nInvalid option selected");
-                                Console.ResetColor();
-                                Thread.Sleep(750);
+                                Console.WriteLine($"{i}-> {folder}");
+                                i++;
+                            }
+                            var folderNumber = 0;
+                            Int32.TryParse(ReadValue("Select folder by number", "1"), out folderNumber);
+                            if ((folderNumber > i) || (folderNumber < 1))
+                            {
+                                Error("\nInvalid menu option selected");
                                 break;
                             }
+                            Process.Start("explorer.exe", allZipFolders[folderNumber-1]);
                             Console.WriteLine("Press any key to exit");
                             Console.ReadKey();
                             break;
@@ -113,6 +105,15 @@ namespace FileManager
 
             }
         }
+
+        private static void Error(string message)
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine(message);
+            Console.ResetColor();
+            Thread.Sleep(750);
+        }
+
 
         public static bool CheckIfChoiceInputIsValid(char input)
         {
@@ -140,6 +141,11 @@ namespace FileManager
                 extensionStatistics.Add(stats);
             });
             extensionStatistics = extensionStatistics.OrderByDescending(x => x.Count).ToList();
+            CreateAndPrintTable(extensionStatistics);
+        }
+
+        private static void CreateAndPrintTable(List<ExtensionStatistic> extensionStatistics)
+        {
             var statTable = new Table("type", "count", "sum");
             statTable.Config = TableConfiguration.UnicodeAlt();
             foreach (var stat in extensionStatistics)
@@ -150,12 +156,11 @@ namespace FileManager
             Console.ForegroundColor = ConsoleColor.Yellow;
             Console.WriteLine(statTable);
             Console.ResetColor();
-
         }
 
         private static string GetExistingDirectoryPath(string DefaultPath)
         {
-            Console.WriteLine();
+
             var directoryPath = "";
             do
             {
