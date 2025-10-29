@@ -71,5 +71,3 @@ FileManager/
 
 ---
 
-Autor: *Tvůj GitHub nick nebo jméno*  
-Datum: *říjen 2025*
